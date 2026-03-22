@@ -1,1 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Detective Mystery Game — Dark Noir Ultra Edition</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <style>
+    :root {
+      --bg-a: #03040a;
+      --bg-b: #0b1231;
+      --glass: rgba(255, 255, 255, 0.08);
+      --glass-border: rgba(134, 150, 255, 0.35);
+      --text: #f2f5ff;
+      --muted: #a8b1d4;
+      --cyan: #14d9ff;
+      --violet: #8466ff;
+      --danger: #ff5f7a;
+      --success: #56f2af;
+      --radius: 18px;
+      --shadow: 0 0 0 1px rgba(142, 152, 255, 0.25), 0 14px 40px rgba(7, 9, 23, 0.65), 0 0 24px rgba(20, 217, 255, 0.2);
+    }
 
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Poppins", sans-serif;
+      color: var(--text);
+      background: radial-gradient(1200px 600px at 90% -20%, rgba(132, 102, 255, 0.2), transparent 60%), linear-gradient(135deg, var(--bg-a), var(--bg-b));
+      overflow-x: hidden;
+    }
+
+    .bg-fx, .bg-fx::before, .bg-fx::after {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .bg-fx::before {
+      content: "";
+      background: radial-gradient(circle at 20% 20%, rgba(20, 217, 255, 0.08), transparent 35%),
+                  radial-gradient(circle at 80% 30%, rgba(132, 102, 255, 0.12), transparent 40%);
+      filter: blur(20px);
+      animation: pulse 8s ease-in-out infinite alternate;
+    }
+
+    .bg-fx::after {
+      content: "";
+      background: repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 5px);
+      opacity: .2;
+      mix-blend-mode: screen;
+    }
+
+    #fog {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(50% 35% at 20% 80%, rgba(188, 212, 255, 0.08), transparent 70%),
+                  radial-gradient(45% 30% at 80% 20%, rgba(199, 178, 255, 0.1), transparent 70%);
+      filter: blur(26px);
+      animation: drift 18s linear infinite alternate;
+      z-index: -1;
+    }
+
+    #particles {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(120, 164, 255, 0.35);
+      box-shadow: 0 0 14px rgba(99, 146, 255, 0.55);
+      animation: floatUp linear infinite;
+    }
+
+    #splash {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, rgba(2, 3, 8, 0.95), rgba(5, 10, 28, 0.95));
+      z-index: 30;
+      transition: opacity .5s ease, visibility .5s ease;
+    }
+
+    #splash.hidden {
+      opacity: 0;
+      visibility: hidden;
+    }
+
+    .splash-card {
+      width: min(90%, 560px);
+      text-align: center;
+      padding: 34px 24px;
+      border-radius: 24px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      animation: slideIn .8s ease;
+    }
+
+    .splash-title {
+      margin: 8px 0;
+      font: 700 1.9rem/1.2 "Orbitron", sans-serif;
+      letter-spacing: 1px;
+      text-shadow: 0 0 16px rgba(20, 217, 255, 0.5);
+    }
+
+    .subtle { color: var(--muted); font-size: .95rem; }
+
+    .btn {
+      border: none;
+      border-radius: 14px;
+      padding: 11px 16px;
+      font-weight: 600;
+      color: #eaf3ff;
+      background: linear-gradient(45deg, rgba(20, 217, 255, 0.8), rgba(132, 102, 255, 0.85));
+      box-shadow: 0 8px 20px rgba(60, 100, 255, 0.35), 0 0 16px rgba(20, 217, 255, 0.3);
+      cursor: pointer;
+      transition: transform .15s ease, filter .2s ease;
+    }
+
+    .btn:hover { transform: translateY(-1px); filter: brightness(1.08); }
+    .btn:active { transform: translateY(1px); }
+
+    .btn.secondary {
+      background: linear-gradient(45deg, rgba(26, 33, 78, 0.9), rgba(32, 42, 90, 0.95));
+      box-shadow: inset 0 0 0 1px rgba(123, 149, 255, 0.3), 0 6px 16px rgba(12, 16, 40, 0.65);
+    }
+
+    .app {
+      width: min(1240px, 94vw);
+      margin: 22px auto 28px;
+      display: grid;
+      grid-template-columns: 320px 1fr 300px;
+      gap: 16px;
+    }
+
+    .card {
+      border-radius: var(--radius);
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      overflow: hidden;
+    }
+
+    .header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+    }
+
+    .brand {
+      font-family: "Orbitron", sans-serif;
+      font-size: 1.05rem;
+      letter-spacing: .8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stats {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .cases-panel, .tools-panel { padding: 14px; }
+
+    .panel-title {
+      margin: 2px 0 12px;
+      font: 600 1rem "Orbitron", sans-serif;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    #caseList {
+      display: grid;
+      gap: 10px;
+      max-height: 70vh;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .case-item {
+      padding: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(139, 154, 255, 0.25);
+      background: rgba(12, 16, 40, 0.6);
+      cursor: pointer;
+      transition: all .2s ease;
+    }
+
+    .case-item:hover { border-color: rgba(20, 217, 255, 0.55); transform: translateY(-1px); }
+    .case-item.active { border-color: rgba(132, 102, 255, 0.75); box-shadow: 0 0 16px rgba(132,102,255,.35); }
+    .case-item h4 { margin: 0 0 6px; font-size: .95rem; }
+    .case-meta { color: var(--muted); font-size: .8rem; }
+
+    .story {
+      min-height: 76vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    #storyBackdrop {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(5,8,20,.5), rgba(5,8,20,.85)), center/cover no-repeat;
+      transition: background-image .4s ease;
+    }
+
+    .story-content {
+      position: relative;
+      z-index: 1;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    #storyTitle { font: 600 1.2rem "Orbitron", sans-serif; margin: 0 0 8px; }
+    #storyText {
+      min-height: 150px;
+      line-height: 1.7;
+      color: #edf2ff;
+      margin-bottom: 14px;
+      padding: 14px;
+      border-radius: 14px;
+      background: rgba(10, 14, 34, 0.62);
+      border: 1px solid rgba(150, 162, 255, 0.22);
+    }
+
+    #choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+
+    .tool-block {
+      margin-bottom: 12px;
+      padding: 12px;
+      border-radius: 14px;
+      background: rgba(10, 14, 34, .56);
+      border: 1px solid rgba(150, 162, 255, .22);
+    }
+
+    .tool-block h5 { margin: 0 0 8px; font-size: .9rem; }
+    #evidence { display: flex; flex-wrap: wrap; gap: 8px; }
+    .clue-chip {
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: .78rem;
+      color: #d6f5ff;
+      border: 1px solid rgba(20, 217, 255, .4);
+      background: rgba(20, 217, 255, 0.12);
+    }
+
+    input, select {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      color: white;
+      border: 1px solid rgba(138, 150, 255, .45);
+      border-radius: 10px;
+      padding: 10px;
+      outline: none;
+      margin-bottom: 8px;
+    }
+
+    .status {
+      font-size: .85rem;
+      color: var(--muted);
+      padding: 10px 14px;
+      border-top: 1px solid rgba(145, 157, 255, .2);
+    }
+
+    .success { color: var(--success); }
+    .danger { color: var(--danger); }
+
+    @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
+    @keyframes pulse { from { opacity: .6; } to { opacity: 1; } }
+    @keyframes drift { from { transform: translateX(-2%) translateY(1%); } to { transform: translateX(2%) translateY(-1%); } }
+    @keyframes floatUp { from { transform: translateY(120vh); opacity: 0; } 15% { opacity: .5; } to { transform: translateY(-20vh); opacity: 0; } }
+
+    @media (max-width: 1060px) {
+      .app { grid-template-columns: 1fr; }
+      .story { min-height: 62vh; }
+      #caseList { max-height: 36vh; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-fx"></div>
+  <div id="fog"></div>
+  <div id="particles"></div>
+
+  <section id="splash">
+    <div class="splash-card">
+      <i class="fa-solid fa-user-secret fa-2x"></i>
+      <h1 class="splash-title">Detective Mystery Game</h1>
+      <p class="subtle">Dark Noir Ultra Edition — uncover clues, solve puzzles, decide fates.</p>
+      <button class="btn" id="enterBtn"><i class="fa-solid fa-play"></i> Enter Investigation</button>
+      <p class="subtle" style="margin-top:10px;">Realtime data powered by Firebase</p>
+    </div>
+  </section>
+
+  <main class="app">
+    <header class="card header">
+      <div class="brand"><i class="fa-solid fa-fingerprint"></i> NOIR CASE DESK</div>
+      <div class="stats">
+        <span><i class="fa-solid fa-bolt"></i> XP: <b id="xpCount">0</b></span>
+        <span><i class="fa-solid fa-trophy"></i> Level: <b id="levelCount">1</b></span>
+        <button class="btn secondary" id="muteBtn"><i class="fa-solid fa-volume-high"></i> Audio</button>
+      </div>
+    </header>
+
+    <aside class="card cases-panel">
+      <h3 class="panel-title"><i class="fa-solid fa-folder-open"></i> Active Cases</h3>
+      <div id="caseList"></div>
+    </aside>
+
+    <section class="card story">
+      <div id="storyBackdrop"></div>
+      <div class="story-content">
+        <h2 id="storyTitle">Select a case to begin</h2>
+        <div id="storyText">Waiting for case data from Firebase...</div>
+        <div id="choices"></div>
+      </div>
+      <div id="statusBar" class="status">System ready.</div>
+    </section>
+
+    <aside class="card tools-panel">
+      <h3 class="panel-title"><i class="fa-solid fa-magnifying-glass-chart"></i> Detective Toolkit</h3>
+      <div class="tool-block">
+        <h5><i class="fa-solid fa-folder-tree"></i> Evidence Board</h5>
+        <div id="evidence"></div>
+      </div>
+      <div class="tool-block">
+        <h5><i class="fa-solid fa-key"></i> Puzzle System</h5>
+        <input type="text" id="puzzleInput" placeholder="Enter password / code" />
+        <button class="btn" id="solvePuzzleBtn">Submit Puzzle</button>
+      </div>
+      <div class="tool-block">
+        <h5><i class="fa-solid fa-comments"></i> Interrogation</h5>
+        <div id="interrogationArea" class="subtle">Questions appear on relevant scenes.</div>
+      </div>
+      <div class="tool-block">
+        <h5><i class="fa-solid fa-gears"></i> Firebase Setup</h5>
+        <input id="apiKey" placeholder="apiKey" />
+        <input id="databaseURL" placeholder="databaseURL" />
+        <button class="btn secondary" id="initFirebaseBtn">Initialize Firebase</button>
+      </div>
+    </aside>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script>
+    const state = {
+      data: { cases: {} },
+      currentCaseId: null,
+      currentSceneId: null,
+      collectedClues: [],
+      xp: 0,
+      level: 1,
+      requiredClues: 2,
+      muted: false,
+      trust: 0,
+      currentAudio: null,
+      typingToken: 0,
+      correctPassword: "",
+      firebaseReady: false
+    };
+
+    const el = {
+      splash: document.getElementById("splash"),
+      enterBtn: document.getElementById("enterBtn"),
+      caseList: document.getElementById("caseList"),
+      storyTitle: document.getElementById("storyTitle"),
+      storyText: document.getElementById("storyText"),
+      storyBackdrop: document.getElementById("storyBackdrop"),
+      choices: document.getElementById("choices"),
+      evidence: document.getElementById("evidence"),
+      statusBar: document.getElementById("statusBar"),
+      xpCount: document.getElementById("xpCount"),
+      levelCount: document.getElementById("levelCount"),
+      puzzleInput: document.getElementById("puzzleInput"),
+      solvePuzzleBtn: document.getElementById("solvePuzzleBtn"),
+      interrogationArea: document.getElementById("interrogationArea"),
+      muteBtn: document.getElementById("muteBtn"),
+      initFirebaseBtn: document.getElementById("initFirebaseBtn"),
+      apiKey: document.getElementById("apiKey"),
+      databaseURL: document.getElementById("databaseURL")
+    };
+
+    function setStatus(text, type = "") {
+      el.statusBar.className = "status " + type;
+      el.statusBar.textContent = text;
+    }
+
+    function createParticles() {
+      const host = document.getElementById("particles");
+      for (let i = 0; i < 32; i++) {
+        const p = document.createElement("div");
+        p.className = "particle";
+        const size = (Math.random() * 3 + 1.5).toFixed(2);
+        p.style.width = size + "px";
+        p.style.height = size + "px";
+        p.style.left = Math.random() * 100 + "%";
+        p.style.animationDuration = (Math.random() * 22 + 12).toFixed(2) + "s";
+        p.style.animationDelay = (Math.random() * 18).toFixed(2) + "s";
+        host.appendChild(p);
+      }
+    }
+
+    function displayText(text) {
+      const safeText = String(text || "");
+      let i = 0;
+      let output = "";
+      const speed = 24;
+      const token = ++state.typingToken;
+      el.storyText.textContent = "";
+
+      (function type() {
+        if (token !== state.typingToken) return;
+        if (i < safeText.length) {
+          output += safeText.charAt(i++);
+          el.storyText.textContent = output;
+          setTimeout(type, speed);
+        }
+      })();
+    }
+
+    function setBackground(url) {
+      const fallback = "linear-gradient(180deg, rgba(5,8,20,.5), rgba(5,8,20,.85))";
+      const bg = url ? `${fallback}, url('${url}')` : fallback;
+      el.storyBackdrop.style.background = bg + " center / cover no-repeat";
+    }
+
+    function stopSound() {
+      if (state.currentAudio) {
+        state.currentAudio.pause();
+        state.currentAudio.currentTime = 0;
+        state.currentAudio = null;
+      }
+    }
+
+    function playSound(url) {
+      stopSound();
+      if (!url || state.muted) return;
+      const audio = new Audio(url);
+      audio.loop = true;
+      audio.volume = 0.4;
+      audio.play().catch(() => setStatus("Audio blocked by browser. Tap Audio after interaction.", "danger"));
+      state.currentAudio = audio;
+    }
+
+    function addXp(amount) {
+      state.xp += amount;
+      state.level = Math.floor(state.xp / 100) + 1;
+      el.xpCount.textContent = state.xp;
+      el.levelCount.textContent = state.level;
+    }
+
+    function updateEvidenceBoard() {
+      el.evidence.innerHTML = "";
+      if (!state.collectedClues.length) {
+        el.evidence.innerHTML = "<span class='subtle'>No clues collected.</span>";
+        return;
+      }
+      state.collectedClues.forEach(clue => {
+        const div = document.createElement("div");
+        div.className = "clue-chip";
+        div.textContent = clue;
+        el.evidence.appendChild(div);
+      });
+    }
+
+    function detectClue(clueId) {
+      if (!clueId || state.collectedClues.includes(clueId)) return;
+      state.collectedClues.push(clueId);
+      addXp(20);
+      updateEvidenceBoard();
+      setStatus("Clue detected: " + clueId, "success");
+    }
+
+    function showResult(result) {
+      const text = result === "SUCCESS" ? "Case Solved. The truth is exposed." : "Case Failed. Critical details were missed.";
+      displayText(text);
+      el.choices.innerHTML = '<button class="btn secondary" onclick="resetCaseProgress()">Restart Case</button>';
+    }
+
+    function checkEnding() {
+      const outcome = state.collectedClues.length >= state.requiredClues ? "SUCCESS" : "FAIL";
+      showResult(outcome);
+      setStatus("Result: " + outcome, outcome === "SUCCESS" ? "success" : "danger");
+    }
+
+    function renderInterrogation(interrogation) {
+      el.interrogationArea.innerHTML = "";
+      if (!interrogation || !Array.isArray(interrogation.options) || !interrogation.options.length) {
+        el.interrogationArea.innerHTML = '<span class="subtle">No interrogation in this scene.</span>';
+        return;
+      }
+      const q = document.createElement("div");
+      q.textContent = interrogation.question || "Choose your response:";
+      q.style.marginBottom = "8px";
+      el.interrogationArea.appendChild(q);
+      interrogation.options.forEach(option => {
+        const btn = document.createElement("button");
+        btn.className = "btn secondary";
+        btn.style.marginBottom = "6px";
+        btn.textContent = option.text || "Response";
+        btn.onclick = () => handleQuestion(option);
+        el.interrogationArea.appendChild(btn);
+      });
+    }
+
+    function increaseTrust() {
+      state.trust += 1;
+      addXp(10);
+      setStatus("Interrogation success. Trust increased.", "success");
+    }
+
+    function handleQuestion(answer) {
+      if (answer && answer.correct) increaseTrust();
+      else setStatus("Wrong move during interrogation.", "danger");
+    }
+
+    function renderChoices(choices) {
+      el.choices.innerHTML = "";
+      if (!choices || !Object.keys(choices).length) {
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.textContent = "Check Final Outcome";
+        btn.onclick = checkEnding;
+        el.choices.appendChild(btn);
+        return;
+      }
+
+      Object.keys(choices).forEach(key => {
+        const choice = choices[key] || {};
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.textContent = choice.text || "Continue";
+        btn.onclick = () => loadScene(state.currentCaseId, choice.next);
+        el.choices.appendChild(btn);
+      });
+    }
+
+    function loadScene(caseId, sceneId) {
+      const gameCase = state.data.cases && state.data.cases[caseId];
+      if (!gameCase || !gameCase.scenes) {
+        setStatus("Case data unavailable.", "danger");
+        return;
+      }
+      const scene = gameCase.scenes[sceneId];
+      if (!scene) {
+        setStatus("Scene not found: " + sceneId, "danger");
+        return;
+      }
+
+      state.currentCaseId = caseId;
+      state.currentSceneId = sceneId;
+      el.storyTitle.textContent = gameCase.title + " • " + sceneId;
+      displayText(scene.text || "...");
+      setBackground(scene.image || gameCase.image || "");
+      playSound(scene.sound || gameCase.sound || "");
+      renderChoices(scene.choices || {});
+      renderInterrogation(scene.interrogation || null);
+
+      const clues = Array.isArray(scene.clues) ? scene.clues : [scene.clueId].filter(Boolean);
+      clues.forEach(detectClue);
+
+      if (scene.puzzle && scene.puzzle.answer) {
+        state.correctPassword = String(scene.puzzle.answer);
+      }
+      if (scene.requiredClues) {
+        state.requiredClues = Number(scene.requiredClues) || state.requiredClues;
+      } else if (gameCase.requiredClues) {
+        state.requiredClues = Number(gameCase.requiredClues) || state.requiredClues;
+      }
+    }
+
+    function getFirstSceneId(gameCase) {
+      if (!gameCase || !gameCase.scenes) return null;
+      const keys = Object.keys(gameCase.scenes);
+      if (!keys.length) return null;
+      const scene1 = keys.find(k => k.toLowerCase() === "scene1");
+      return scene1 || keys[0];
+    }
+
+    function selectCase(caseId) {
+      const gameCase = state.data.cases[caseId];
+      if (!gameCase) return;
+      state.currentCaseId = caseId;
+      state.collectedClues = [];
+      state.trust = 0;
+      updateEvidenceBoard();
+      state.requiredClues = Number(gameCase.requiredClues) || 2;
+      const firstScene = getFirstSceneId(gameCase);
+      if (firstScene) loadScene(caseId, firstScene);
+      else {
+        el.storyTitle.textContent = gameCase.title;
+        displayText("This case has no scenes yet.");
+      }
+      renderCaseList();
+    }
+
+    function renderCaseList() {
+      el.caseList.innerHTML = "";
+      const cases = state.data.cases || {};
+      const ids = Object.keys(cases).filter(id => (cases[id] || {}).status !== "inactive");
+      if (!ids.length) {
+        el.caseList.innerHTML = "<div class='subtle'>No active cases found in Firebase.</div>";
+        return;
+      }
+      ids.forEach(id => {
+        const c = cases[id] || {};
+        const item = document.createElement("div");
+        item.className = "case-item" + (id === state.currentCaseId ? " active" : "");
+        item.innerHTML = `
+          <h4>${c.title || id}</h4>
+          <div class="case-meta">${c.difficulty || "Unknown"} • Unlock L${c.unlockLevel || 1}</div>
+          <div class="case-meta">${(c.description || "").slice(0, 66)}</div>
+        `;
+        item.onclick = () => selectCase(id);
+        el.caseList.appendChild(item);
+      });
+    }
+
+    function checkPassword(input) {
+      if (!state.correctPassword) {
+        setStatus("No active puzzle in this scene.");
+        return;
+      }
+      if (String(input).trim() === state.correctPassword) {
+        addXp(30);
+        setStatus("Puzzle cracked. Proceed with next lead.", "success");
+        const scene = state.data.cases?.[state.currentCaseId]?.scenes?.[state.currentSceneId];
+        if (scene && scene.puzzle && scene.puzzle.next) loadScene(state.currentCaseId, scene.puzzle.next);
+      } else {
+        setStatus("Incorrect password.", "danger");
+      }
+    }
+
+    function resetCaseProgress() {
+      if (!state.currentCaseId) return;
+      selectCase(state.currentCaseId);
+    }
+    window.resetCaseProgress = resetCaseProgress;
+
+    function renderCasesFromSnapshot(snapshotVal) {
+      state.data = { cases: snapshotVal || {} };
+      renderCaseList();
+      if (!state.currentCaseId) {
+        const firstId = Object.keys(state.data.cases || {}).find(id => (state.data.cases[id] || {}).status !== "inactive");
+        if (firstId) selectCase(firstId);
+      }
+    }
+
+    function initializeFirebase() {
+      const apiKey = el.apiKey.value.trim();
+      const databaseURL = el.databaseURL.value.trim();
+      if (!apiKey || !databaseURL) {
+        setStatus("Paste apiKey and databaseURL, then initialize.", "danger");
+        return;
+      }
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp({ apiKey, databaseURL });
+        }
+        const database = firebase.database();
+        database.ref("cases").on("value", snap => {
+          renderCasesFromSnapshot(snap.val());
+          state.firebaseReady = true;
+          setStatus("Realtime sync active.");
+        }, () => setStatus("Unable to read Firebase data.", "danger"));
+      } catch (e) {
+        setStatus("Firebase initialization error.", "danger");
+      }
+    }
+
+    el.enterBtn.onclick = () => el.splash.classList.add("hidden");
+    setTimeout(() => el.splash.classList.add("hidden"), 2200);
+
+    el.solvePuzzleBtn.onclick = () => checkPassword(el.puzzleInput.value);
+    el.puzzleInput.addEventListener("keydown", e => { if (e.key === "Enter") checkPassword(el.puzzleInput.value); });
+    el.initFirebaseBtn.onclick = initializeFirebase;
+    el.muteBtn.onclick = () => {
+      state.muted = !state.muted;
+      el.muteBtn.innerHTML = state.muted ? '<i class="fa-solid fa-volume-xmark"></i> Muted' : '<i class="fa-solid fa-volume-high"></i> Audio';
+      if (state.muted) stopSound();
+      else {
+        const scene = state.data.cases?.[state.currentCaseId]?.scenes?.[state.currentSceneId];
+        if (scene) playSound(scene.sound || state.data.cases[state.currentCaseId].sound || "");
+      }
+    };
+
+    createParticles();
+    updateEvidenceBoard();
+    setStatus("Enter Firebase config to begin live sync.");
+  </script>
+</body>
+</html>
